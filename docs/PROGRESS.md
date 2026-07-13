@@ -67,6 +67,13 @@
 - Cài torch cu128, xác nhận GPU RTX 5060 hoạt động.
 - Cài sentence-transformers, tải bge-m3, viết notebook cosine similarity (tự tay).
 
-### 2026-07-XX (khởi đầu)
+### 2026-07-10 (khởi đầu)
 - Setup repo, SRS/ARCHITECTURE/CLAUDE.md, Git init, xử lý lỗi commit nhầm `.venv`, push GitHub thành công.
 - Viết `chunker.py` (tự tay) và `loader.py` (vibe coding), cả hai có test pass.
+### 2026-07-13
+- Hoàn thành llm/client.py + prompts.py, đa provider (gemini mặc định, anthropic dự phòng).
+- Xác nhận: context rỗng → model trả lời "Tài liệu không đề cập", không hallucinate.
+- [Hạn chế đã biết] sources trong rag/pipeline.py phản ánh "chunk đã gửi cho LLM",
+  không phải "chunk LLM thực sự trích dẫn" — có thể gây lệch giữa answer và sources
+  khi top_k lấy về chunk không thật sự liên quan. Sẽ cải thiện khi làm reranker (tuần 5-6)
+  và agent grading (tuần 6-7).
