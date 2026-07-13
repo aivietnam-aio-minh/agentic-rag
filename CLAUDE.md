@@ -7,6 +7,7 @@
 
 Agentic RAG Assistant — hệ thống hỏi đáp tài liệu tiếng Việt có trích dẫn nguồn, với tầng agent tự chọn tool (tra tài liệu / tính toán / tìm web) và tự kiểm tra kết quả. Đồ án portfolio của một fresher AI Engineer: **chủ repo đang học, nên mọi code phải kèm giải thích ngắn gọn "vì sao", không chỉ "làm gì"**.
 
+- **Tiến độ hiện tại: `./docs/PROGRESS.md` — ĐỌC FILE NÀY ĐẦU TIÊN mỗi phiên, trước cả SRS/ARCHITECTURE, để biết đang làm dở gì và tránh làm lại/đè lên việc đã xong.**
 - SRS: `./SRS.md` — đọc mục 5 (Out of Scope) trước khi đề xuất bất kỳ tính năng nào
 - Architecture: `./ARCHITECTURE.md` — tuân thủ ranh giới module ở mục 4 và các ADR
 - Kế hoạch & quy tắc làm việc: `./docs/ke-hoach-thuc-hien-agentic-rag.md`
@@ -71,7 +72,13 @@ Với mọi feature không tầm thường, trình bày kế hoạch (Plan Mode)
 ## Bài học tích lũy
 
 <!-- Mỗi lần agent làm sai và được sửa, thêm 1 dòng vào đây để không lặp lại -->
+- indexer.py dùng UUID ngẫu nhiên cho mỗi point → re-index cùng file bị trùng lặp dữ liệu; cần sửa sang ID hash theo nội dung trước khi làm UI upload (xem PROGRESS.md mục "Quyết định đang treo").
+- Nhớ sửa file `.gitignore` phải giữ `data/` và `qdrant_data/` là 2 dòng riêng — gộp thành 1 dòng lồng nhau (`data/qdrant_data/`) sẽ làm lộ các thư mục con khác.
 -
+
+## Cuối mỗi phiên làm việc
+
+Trước khi kết thúc phiên, cập nhật `docs/PROGRESS.md`: đánh dấu việc vừa xong ở bảng trạng thái, ghi 1 dòng vào "Nhật ký theo ngày", và nêu rõ việc đang dở/việc tiếp theo — để phiên sau (dù là chủ repo, agent này, hay người khác) không phải dò lại từ đầu.
 
 ## Skill liên quan trong repo này
 
