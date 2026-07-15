@@ -5,12 +5,12 @@
 > QUY TẮC: cập nhật file này SAU MỖI buổi code, không đợi cuối tuần.
 > Không xóa lịch sử cũ trong "Nhật ký theo ngày" — chỉ thêm mới lên đầu.
 
-## Trạng thái hiện tại (cập nhật lần cuối: 2026-07-XX)
+## Trạng thái hiện tại (cập nhật lần cuối: 2026-07-15)
 
-- **Đang ở tuần:** 3/10 (theo `ke-hoach-thuc-hien-agentic-rag.md`)
+- **Đang ở tuần:** 4/10 (theo `ke-hoach-thuc-hien-agentic-rag.md`)
 - **Nhánh đang làm việc:** `feature/rag-answer`
-- **Đang làm dở:** viết `app/llm/client.py` + `app/llm/prompts.py` (Prompt A trong hội thoại mentor) — CHƯA test xong, chưa commit.
-- **Việc tiếp theo ngay sau đó:** `app/rag/pipeline.py` ghép `VectorStore.search()` + `generate_answer()` → có câu trả lời RAG hoàn chỉnh đầu tiên (mốc MVP tuần 3).
+- **Vừa xong:** index thành công 2 file PDF vào Qdrant (collection `docs`, 118 points); hoàn thành `eval/dataset.jsonl` (64 câu, draft).
+- **Việc tiếp theo:** viết `eval/run_eval.py`.
 
 ## Đã hoàn thành (theo tầng)
 
@@ -25,9 +25,10 @@
 | ingestion | `indexer.py` (`index_document`) | ✅ Xong | Vibe coding; test pass; đã index thật `data/finetune_Qwen.pdf` → collection `docs`, 7 points, xác nhận qua dashboard |
 | retrieval | `vector_store.py` (class `VectorStore`) | ✅ Xong | Bọc embedding + Qdrant search; test tay cho kết quả đúng; đã commit |
 | experiments | `01_cosine_similarity_test.ipynb` | ✅ Xong | Tự viết tay hàm cosine, 3 câu test, kết quả 0.72 vs 0.36 |
-| llm | `client.py`, `prompts.py` | 🔶 Đang làm | Chưa test, chưa commit |
-| rag | `pipeline.py` | ⬜ Chưa làm | Chờ xong llm/ |
-| eval | dataset + RAGAS | ⬜ Chưa làm | Tuần 4 theo kế hoạch |
+| llm | `client.py`, `prompts.py` | ✅ Xong | Đa provider (gemini mặc định, anthropic dự phòng); đã test |
+| rag | `pipeline.py` | ✅ Xong | Ghép `VectorStore.search()` + `generate_answer()`, có câu trả lời RAG hoàn chỉnh đầu tiên |
+| eval | `dataset.jsonl` (64 câu) | ✅ Xong (draft) | Chưa chạy RAGAS |
+| eval | `run_eval.py` | ⬜ Chưa làm | Tuần 4 theo kế hoạch |
 | retrieval | hybrid search (BM25 + RRF) | ⬜ Chưa làm | Tuần 5 |
 | retrieval | reranker | ⬜ Chưa làm | Tuần 5–6 |
 | agent | `tools.py`, `loop.py` | ⬜ Chưa làm | Tuần 6 |
@@ -51,6 +52,11 @@
 - Chưa cài: reranker, Ollama, Tavily
 
 ## Nhật ký theo ngày (thêm mới lên đầu, không xóa cũ)
+
+### 2026-07-15
+- Index thành công `RAG.pdf` vào Qdrant.
+- Hoàn thành `eval/dataset.jsonl` (64 câu).
+- Xóa collection `test_docs` rác trong Qdrant.
 
 ### 2026-07-XX
 - Viết xong `vector_store.py`, test tay OK, đã commit.
