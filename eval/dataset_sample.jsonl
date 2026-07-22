@@ -1,0 +1,3 @@
+{"id": "fq001", "question": "Đề tài chính của tài liệu là gì?", "ground_truth": "Fine-tune thử model Qwen 0.5B cho bài toán dịch Anh-Việt/Việt-Anh và giải thích thuật ngữ chuyên ngành.", "source_page": 1, "type": "simple", "notes": "Câu hỏi tổng quan, đáp án nằm ngay câu mở đầu."}
+{"id": "fq002", "question": "Mô hình nào được đề xuất fine-tune trong dự án này?", "ground_truth": "Qwen 0.5B.", "source_page": 1, "type": "simple", "notes": "Truy xuất trực tiếp."}
+{"id": "fq003", "question": "Hai mảng nội dung chính mà dự án tập trung là gì?", "ground_truth": "Mảng luật về sở hữu trí tuệ, và mảng kinh doanh xuất nhập khẩu.", "source_page": 1, "type": "simple", "notes": "Truy xuất trực tiếp."}

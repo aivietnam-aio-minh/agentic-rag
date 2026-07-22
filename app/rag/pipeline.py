@@ -7,7 +7,7 @@ def ask(question: str, vector_store: VectorStore, top_k: int = 5) -> dict:
     chunks = vector_store.search(question, top_k)
 
     if not chunks:
-        return {"answer": "Tài liệu không đề cập.", "sources": []}
+        return {"answer": "Tài liệu không đề cập.", "sources": [], "retrieved_contexts": []}
 
     context = "\n\n".join(
         f"[{chunk['source']}, trang {chunk['page']}]\n{chunk['text']}" for chunk in chunks
@@ -20,4 +20,8 @@ def ask(question: str, vector_store: VectorStore, top_k: int = 5) -> dict:
         if source not in sources:
             sources.append(source)
 
-    return {"answer": answer, "sources": sources}
+    return {
+        "answer": answer,
+        "sources": sources,
+        "retrieved_contexts": [chunk["text"] for chunk in chunks],
+    }

@@ -27,7 +27,7 @@ docker ps
 
 # 3. Kích hoạt lại môi trường ảo Python
 .venv\Scripts\Activate.ps1
-
+.venv-eval\Scripts\Activate.ps1
 #python -c "from app.ingestion.indexer import index_document; n = index_document('data/RAG.pdf', collection_name='docs', device='cuda'); print(f'🎉 Đã index thành công {n} chunks từ file RAG.pdf vào Qdrant!')"
 # test
 pytest tests/ -v
