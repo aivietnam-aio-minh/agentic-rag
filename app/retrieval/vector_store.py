@@ -30,6 +30,7 @@ class VectorStore:
 
         return [
             {
+                "id": hit.id,
                 "text": hit.payload["text"],
                 "page": hit.payload["page"],
                 "source": hit.payload["source"],
