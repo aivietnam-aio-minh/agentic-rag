@@ -27,7 +27,7 @@ docker ps
 
 # 3. Kích hoạt lại môi trường ảo Python
 .venv\Scripts\Activate.ps1
-
+.venv-eval\Scripts\Activate.ps1
 #python -c "from app.ingestion.indexer import index_document; n = index_document('data/RAG.pdf', collection_name='docs', device='cuda'); print(f'🎉 Đã index thành công {n} chunks từ file RAG.pdf vào Qdrant!')"
 # test
 pytest tests/ -v
@@ -83,8 +83,10 @@ Với mọi feature không tầm thường, trình bày kế hoạch (Plan Mode)
 <!-- Mỗi lần agent làm sai và được sửa, thêm 1 dòng vào đây để không lặp lại -->
 - indexer.py dùng UUID ngẫu nhiên cho mỗi point → re-index cùng file bị trùng lặp dữ liệu; cần sửa sang ID hash theo nội dung trước khi làm UI upload (xem PROGRESS.md mục "Quyết định đang treo").
 - Nhớ sửa file `.gitignore` phải giữ `data/` và `qdrant_data/` là 2 dòng riêng — gộp thành 1 dòng lồng nhau (`data/qdrant_data/`) sẽ làm lộ các thư mục con khác.
--
-
+- get_bm25_index() trong pipeline.py dùng cache module-level, không tự
+  invalidate khi có tài liệu mới index vào Qdrant. Khi làm UI upload
+  (sau khi upload xong), cần xóa data/bm25_index.pkl + reset _bm25_cache
+  về None để lần gọi ask() tiếp theo tự rebuild BM25 với dữ liệu mới.
 ## Cuối mỗi phiên làm việc
 
 Trước khi kết thúc phiên, cập nhật `docs/PROGRESS.md`: đánh dấu việc vừa xong ở bảng trạng thái, ghi 1 dòng vào "Nhật ký theo ngày", và nêu rõ việc đang dở/việc tiếp theo — để phiên sau (dù là chủ repo, agent này, hay người khác) không phải dò lại từ đầu.
@@ -93,3 +95,10 @@ Trước khi kết thúc phiên, cập nhật `docs/PROGRESS.md`: đánh dấu v
 
 <!-- Liệt kê các skill trong .claude/skills/ và khi nào chúng kích hoạt -->
 - (chưa có — sẽ bổ sung nếu tạo skill riêng, ví dụ skill chạy eval và cập nhật report)
+## Quyết định đang treo (bổ sung)
+- Phát hiện khi đọc context ở Giai đoạn 5: một số chunk bị cắt ngang
+  giữa từ/câu (ví dụ "ột biểu diễn" thay vì "một biểu diễn"). Nghi do
+  chunker.py (Giai đoạn 1) cắt cứng theo ký tự/token, không tôn trọng
+  ranh giới từ. Cần điều tra riêng, có thể ảnh hưởng chất lượng retrieval
+  ở các câu hỏi biên. Không sửa ngay vì cần re-index + chạy lại toàn bộ
+  eval nếu đổi chunker.
