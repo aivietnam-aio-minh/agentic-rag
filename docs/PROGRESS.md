@@ -5,12 +5,12 @@
 > QUY TẮC: cập nhật file này SAU MỖI buổi code, không đợi cuối tuần.
 > Không xóa lịch sử cũ trong "Nhật ký theo ngày" — chỉ thêm mới lên đầu.
 
-## Trạng thái hiện tại (cập nhật lần cuối: 2026-08-02)
+## Trạng thái hiện tại (cập nhật lần cuối: 2026-08-05)
 
-- **Đang ở tuần:** 5/10 (theo `ke-hoach-thuc-hien-agentic-rag.md`)
-- **Nhánh đang làm việc:** `feature/hybrid-search`
-- **Vừa xong:** Giai đoạn 5 — hybrid search (BM25 + RRF) + reranker cross-encoder, nối vào `pipeline.ask()` qua tham số `retrieval_mode`; đã chạy lại eval 64 câu và so sánh với baseline.
-- **Việc tiếp theo:** Giai đoạn 6 — `app/agent/tools.py` + `app/agent/loop.py` (2 tool: `search_docs` dùng hybrid_search+rerank vừa xong, `calculator` dùng numexpr).
+- **Đang ở tuần:** 7/10 (theo `ke-hoach-thuc-hien-agentic-rag.md`)
+- **Nhánh đang làm việc:** `feature/agent-tools`
+- **Vừa xong:** Giai đoạn 6 — `agent/tools.py` (`search_docs`, `calculator`) + `agent/loop.py` (vòng lặp tool-use, `MAX_STEPS=6`), test tay 10 câu từ `dataset.jsonl`.
+- **Việc tiếp theo:** Giai đoạn 7 — `agent/graph.py` (LangGraph, grading + rewrite).
 
 ## Đã hoàn thành (theo tầng)
 
@@ -25,7 +25,7 @@
 | ingestion | `indexer.py` (`index_document`) | ✅ Xong | Vibe coding; test pass; đã index thật `data/finetune_Qwen.pdf` → collection `docs`, 118 points, xác nhận qua dashboard |
 | retrieval | `vector_store.py` (class `VectorStore`) | ✅ Xong | Bọc embedding + Qdrant search; test tay cho kết quả đúng; đã commit |
 | experiments | `01_cosine_similarity_test.ipynb` | ✅ Xong | Tự viết tay hàm cosine, 3 câu test, kết quả 0.72 vs 0.36 |
-| llm | `client.py`, `prompts.py` | ✅ Xong | Đa provider (gemini mặc định, anthropic dự phòng); đã test |
+| llm | client.py, prompts.py | ✅ Xong | Đa provider (gemini/anthropic/openai qua LLM_PROVIDER); retry chung cho lỗi 429 (MAX_RETRIES=3); thêm call_llm_with_tools() cho agent function-calling (Giai đoạn 6) |
 | rag | `pipeline.py` | ✅ Xong | Ghép `VectorStore.search()` + `generate_answer()`, có câu trả lời RAG hoàn chỉnh đầu tiên |
 | eval | `dataset.jsonl` (64 câu) | ✅ Xong | Đã chạy RAGAS thật trên toàn bộ 64 câu |
 | eval | `generate_answers.py` + `score_ragas.py` | ✅ Xong | Tách 2 script/2 môi trường: sinh câu trả lời chạy ở venv chính (torch/GPU), chấm RAGAS chạy ở `.venv-eval` riêng để không phá torch cu128 |
@@ -35,7 +35,8 @@
 | retrieval | `reranker.py` (cross-encoder bge-reranker-v2-m3) | ✅ Xong | `CrossEncoder` của sentence-transformers, singleton, đọc `device` từ tham số |
 | rag | Nối hybrid+rerank vào `pipeline.ask()` | ✅ Xong | Thêm `retrieval_mode`: `vector_only` \| `hybrid` \| `hybrid_rerank` (mặc định), giữ baseline cũ nguyên vẹn để so sánh |
 | eval | Chạy lại 64 câu với `hybrid_rerank` + report so sánh baseline | ✅ Xong | Xem `eval/report.md`; kết quả chi tiết trong nhật ký 2026-08-02 |
-| agent | `tools.py`, `loop.py` | ⬜ Chưa làm | Tuần 6 |
+| agent | `tools.py` (`search_docs`, `calculator`) | ✅ Xong | Bọc hybrid_search+rerank có sẵn (search_docs) + numexpr (calculator, không dùng `eval()` trần) |
+| agent | `loop.py` (vòng lặp agent, `run(question, vector_store) -> {answer, trace, steps}`) | ✅ Xong | Tự viết tay; `MAX_STEPS=6`; refactor `get_bm25_index`/`get_reranker`/`CANDIDATE_K` từ `rag/pipeline.py` sang `retrieval/index_cache.py` để `agent/` và `rag/` không phụ thuộc lẫn nhau (đúng ARCHITECTURE.md mục 4) |
 | agent | `graph.py` (LangGraph) | ⬜ Chưa làm | Tuần 7 |
 | api | FastAPI routes | ⬜ Chưa làm | Tuần 8 |
 | ui | Streamlit | ⬜ Chưa làm | Tuần 8–9 |
@@ -49,6 +50,9 @@
 - **[Kỹ thuật nợ]** Cache BM25/Reranker trong `pipeline.py` dùng biến module-level (`_bm25_cache`, `_reranker_cache`), KHÔNG tự invalidate khi có tài liệu mới index vào Qdrant. Cần xử lý khi làm UI upload: sau khi upload xong phải xóa `data/bm25_index.pkl` và reset 2 biến cache về `None`, nếu không lần `ask()` tiếp theo vẫn dùng index cũ, không thấy tài liệu mới.
 - **[Nghi vấn, cần điều tra riêng]** Một số chunk bị cắt ngang giữa từ/câu — phát hiện khi đọc context thật ở Giai đoạn 5 (ví dụ "ột biểu diễn" thay vì "một biểu diễn"). Nghi do `chunker.py` (Giai đoạn 1) cắt cứng theo ký tự/token, không tôn trọng ranh giới từ. Ảnh hưởng tiềm tàng tới chất lượng retrieval ở các câu hỏi biên. CHƯA sửa vì đổi chunker sẽ phải re-index toàn bộ + chạy lại toàn bộ eval.
 - **[Giới hạn thiết kế đã biết]** Rerank cross-encoder xử lý kém với câu hỏi liệt kê/tổng hợp cấu trúc toàn tài liệu (xem chi tiết ở nhật ký 2026-08-02). Cần quyết định sau: có mở rộng phạm vi để xử lý loại câu hỏi này không, hay giữ nguyên vì nằm ngoài SRS (hệ thống định vị "tra cứu", không phải "tóm tắt/liệt kê").
+- **[Đã XÁC MINH bằng grep, cần quyết định phạm vi sửa]** Cross-document contamination trong agent: `search_docs` trả về candidate trộn lẫn từ 2 tài liệu khác chủ đề, agent cố dùng hết context kể cả phần không liên quan tới câu hỏi (T5-Large/CRAG từ `RAG.pdf` bị gắn nhầm vào câu hỏi về dự án fine-tune Qwen) — xem chi tiết ở nhật ký 2026-08-05, fq002/fq024. Hướng xử lý cân nhắc: thêm hướng dẫn system prompt "chỉ dùng thông tin thực sự liên quan", hoặc gắn nhãn nguồn tài liệu rõ ràng trong context.
+- **[Tối ưu hóa, chưa sửa]** Agent lặp lại query gần giống nhau khi không tìm ra thêm thông tin mới (rg029) — lãng phí step, không sai kết quả cuối. Có thể cải thiện bằng system prompt "đổi chiến lược nếu 2 lần tìm liên tiếp cho kết quả giống nhau".
+- **[Cần quyết định thiết kế]** Hành vi agent "hỏi ngược lại" khi câu hỏi mơ hồ (fq029, "Dữ liệu như vậy có đủ không?") — hợp lý về logic nhưng LỆCH khỏi FR-04 (hệ thống hỏi-đáp 1 lượt, không có cơ chế hội thoại nhiều lượt). Cần quyết định: chấp nhận hành vi này (làm UI hỗ trợ), hay buộc agent luôn trả lời tốt nhất có thể thay vì hỏi ngược.
 
 ## Môi trường máy dev (để người/agent khác biết đây KHÔNG phải máy chuẩn CPU)
 
@@ -60,6 +64,27 @@
 - Chưa cài: Ollama, Tavily
 
 ## Nhật ký theo ngày (thêm mới lên đầu, không xóa cũ)
+
+### 2026-08-05 — Giai đoạn 6: Agent tools + loop
+
+**Đã làm:**
+- `tools.py`: `search_docs` (bọc hybrid_search+rerank có sẵn), `calculator` (numexpr, không `eval()` trần). Test tay xác nhận: chia cho 0 ném `ZeroDivisionError` thật (không phải nan/inf như dự đoán ban đầu).
+- `client.py`: thêm `call_llm_with_tools()` hỗ trợ OpenAI function-calling, tách biệt với `generate_answer()` (không đổi hành vi baseline).
+- `loop.py`: vòng lặp tool-use, `messages` tích lũy lịch sử hội thoại, 2 lớp try/except (lỗi gọi LLM dừng hẳn; lỗi parse JSON từ LLM thì ghi lỗi vào `tool_result` để LLM tự sửa ở lượt sau, không crash).
+- Test tay 10 câu từ `dataset.jsonl` (2 câu/loại x 5 loại: simple, multi_hop, needs_calc, out_of_scope, ambiguous).
+
+**Phát hiện quan trọng — agent CẢI THIỆN so với hybrid_rerank pipeline:**
+Câu "đề tài chính của tài liệu là gì?" (fq001) từng bị pipeline `hybrid_rerank` trả lời sai "Tài liệu không đề cập" (Giai đoạn 5, do rerank chọn nhầm chunk). Agent trả lời ĐÚNG vì tự viết lại query ngắn gọn ("đề tài chính") trước khi gọi `search_docs`, thay vì dùng nguyên câu hỏi dài như pipeline vẫn làm. Đây là bằng chứng cụ thể cho giá trị của kiến trúc agent so với RAG tĩnh (ADR-004).
+
+**Phát hiện đã XÁC MINH — cross-document contamination khi `search_docs` trả về candidate trộn lẫn từ cả 2 tài liệu khác chủ đề:**
+- fq002 ("mô hình nào được đề xuất fine-tune trong dự án này?"): agent trả lời đúng Qwen 0.5B nhưng THÊM "mô hình T5-Large" như thể đó cũng là 1 phần dự án. Đã xác minh bằng grep `RAG.pdf` trang 22: T5-Large thực chất được nhắc tới trong mô tả kỹ thuật Corrective RAG (CRAG) — mô hình đánh giá độ liên quan (evaluator), fine-tune để phân loại văn bản thành 3 loại Đúng/Không Đúng/..., HOÀN TOÀN không liên quan tới "dự án fine-tune Qwen" được hỏi.
+- fq024 ("tổng cộng bao nhiêu người tham gia dự án"): trả lời đúng "4 người, 2 nhóm" nhưng thêm câu gây confusion "còn có một dự án khác chia 3 nhóm" — lấy từ `RAG.pdf` trang 23, cùng nội dung phân loại 3 loại của CRAG, KHÔNG liên quan gì tới số người tham gia.
+
+Kết luận: agent có xu hướng cố dùng hết mọi context được cấp, kể cả phần không liên quan tới câu hỏi, khi `search_docs` trả về candidate trộn lẫn 2 nguồn tài liệu khác chủ đề (cùng chứa cụm "3 nhóm/3 loại" khiến rerank/retrieval nhầm lẫn ngữ nghĩa). Hướng xử lý cân nhắc: thêm hướng dẫn trong system prompt "chỉ dùng thông tin thực sự liên quan tới câu hỏi, bỏ qua context không liên quan dù được cung cấp", hoặc lọc/gắn nhãn rõ nguồn tài liệu trong context để LLM phân biệt. CHƯA sửa ngay, cần bàn phạm vi trước khi làm Giai đoạn 7.
+
+**Xác nhận lại giới hạn đã biết** (rg029, "Phần VI có bao nhiêu kỹ thuật"): agent chạm `MAX_STEPS=6`, từ chối đúng cách (không bịa số), khớp giả thuyết "giới hạn dữ liệu/chunking" đã ghi ở Giai đoạn 5, không phải bug agent. Phát hiện thêm: agent lặp lại gần như đúng 1 query nhiều lần (step 3≈5, step 4≈6, cùng query gần giống + cùng kết quả) thay vì đổi chiến lược tìm kiếm khi không ra kết quả mới — có thể cải thiện bằng system prompt hướng dẫn "đổi chiến lược nếu 2 lần tìm liên tiếp cho kết quả giống nhau", chưa sửa.
+
+**Hành vi cần quyết định** (fq029, "Dữ liệu như vậy có đủ không?"): agent KHÔNG gọi tool nào, tự hỏi ngược lại người dùng để làm rõ câu hỏi mơ hồ, thay vì tìm kiếm mù quáng hay đoán. Hợp lý về logic nhưng LỆCH khỏi thiết kế FR-04 (hệ thống hỏi-đáp 1 lượt, không có cơ chế hội thoại nhiều lượt qua lại). Cần quyết định: chấp nhận hành vi này (và làm UI hỗ trợ), hay thêm system prompt buộc agent luôn đưa ra câu trả lời tốt nhất có thể thay vì hỏi ngược.
 
 ### 2026-08-02 — Giai đoạn 5: Hybrid Search + Reranker
 
