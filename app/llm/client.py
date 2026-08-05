@@ -101,3 +101,29 @@ def generate_answer(context: str, question: str) -> str:
             if not _is_rate_limit_error(e) or attempt == MAX_RETRIES:
                 raise
             time.sleep(RETRY_DELAYS_SECONDS[attempt])
+
+
+def call_llm_with_tools(messages: list[dict], tools: list[dict]) -> object:
+    """Gọi OpenAI chat.completions với tool-use, trả message thô (.content, .tool_calls) cho agent tự đọc.
+
+    Chỉ hỗ trợ provider "openai" ở bước này. Retry 429 giống generate_answer();
+    lỗi không retry được thì raise để agent/loop.py tự dừng vòng lặp, KHÔNG nuốt
+    lỗi thành chuỗi giả (bài học từ bug "nuốt lỗi thành answer giả").
+    """
+    from openai import OpenAI
+
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            response = client.chat.completions.create(
+                model=OPENAI_MODEL_NAME,
+                temperature=TEMPERATURE,
+                messages=messages,
+                tools=tools,
+            )
+            return response.choices[0].message
+        except LLM_API_ERRORS as e:
+            if not _is_rate_limit_error(e) or attempt == MAX_RETRIES:
+                raise
+            time.sleep(RETRY_DELAYS_SECONDS[attempt])
